@@ -19,21 +19,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MainUserInterface {
+    //Main frame and it's content_pane
     private static final JFrame FRAME = new JFrame("Servers");
     private static final Container CONTENT_PANE = FRAME.getContentPane();
 
+    //We'll need this frames to show graphics
     private static JFrame frameClientSummary = new JFrame();
     private static JFrame frameClientProcessing = new JFrame();
     private static JFrame frameRequestHandling = new JFrame();
 
-    private void createChart() throws Exception {
-        double[] xData = new double[] { 0.0, 1.0, 2.0 };
-        double[] yData = new double[] { 2.0, 1.0, 0.0 };
-
-        // Create Chart
-        XYChart chart = QuickChart.getChart("Sample Chart", "X", "Y", "y(x)", xData, yData);
-    }
-
+    //Function, that return an array of data, which needed to create a chart
     private static int[] getChartData(int arraySize, int numberOfClients, int delta, int numberOfRequests,
                                       String serverType) {
         try {
@@ -235,13 +230,14 @@ public final class MainUserInterface {
             int numberOfRequests = Integer.parseInt(requestsConstantParameterText.getText());
 
             //Create three arrays for data for three metrics
-            java.util.List<Point> requestHandlingTimeData = new ArrayList<>();
-            java.util.List<Point> clientProcessingTimeData = new ArrayList<>();
-            java.util.List<Point> summaryClientTimeData = new ArrayList<>();
+            java.util.List<Integer> requestHandlingTimeData = new ArrayList<>();
+            java.util.List<Integer> clientProcessingTimeData = new ArrayList<>();
+            java.util.List<Integer> summaryClientTimeData = new ArrayList<>();
+            java.util.List<Integer> changeableParameterData = new ArrayList<>();
 
-            requestHandlingTimeData.add(new Point(0, 0));
-            clientProcessingTimeData.add(new Point(0, 0));
-            summaryClientTimeData.add(new Point(0, 0));
+            requestHandlingTimeData.add(0);
+            clientProcessingTimeData.add(0);
+            summaryClientTimeData.add(0);
 
             //Get data for the changing parameter from textFields of our form
             int from = Integer.parseInt(changeableSettingTextFrom.getText());
@@ -261,9 +257,10 @@ public final class MainUserInterface {
 
                     for (int i = from; i <= to; i += step) {
                         int[] data = getChartData(i, numberOfClients, delta, numberOfRequests, serverType);
-                        requestHandlingTimeData.add(new Point(i, data[0]));
-                        clientProcessingTimeData.add(new Point(i, data[1]));
-                        summaryClientTimeData.add(new Point(i, data[2]));
+                        changeableParameterData.add(i);
+                        requestHandlingTimeData.add(data[0]);
+                        clientProcessingTimeData.add(data[1]);
+                        summaryClientTimeData.add(data[2]);
                     }
                     break;
                 case "clients":
@@ -272,9 +269,10 @@ public final class MainUserInterface {
 
                     for (int i = from; i <= to; i += step) {
                         int[] data = getChartData(arraySize, i, delta, numberOfRequests, serverType);
-                        requestHandlingTimeData.add(new Point(i, data[0]));
-                        clientProcessingTimeData.add(new Point(i, data[1]));
-                        summaryClientTimeData.add(new Point(i, data[2]));
+                        changeableParameterData.add(i);
+                        requestHandlingTimeData.add(data[0]);
+                        clientProcessingTimeData.add(data[1]);
+                        summaryClientTimeData.add(data[2]);
                     }
                     break;
                 default:
@@ -284,11 +282,23 @@ public final class MainUserInterface {
                     for (int i = from; i <= to; i += step) {
                         int[] data = getChartData(arraySize, numberOfClients, i,
                                 numberOfRequests, serverType);
-                        requestHandlingTimeData.add(new Point(i, data[0]));
-                        clientProcessingTimeData.add(new Point(i, data[1]));
-                        summaryClientTimeData.add(new Point(i, data[2]));
+                        changeableParameterData.add(i);
+                        requestHandlingTimeData.add(data[0]);
+                        clientProcessingTimeData.add(data[1]);
+                        summaryClientTimeData.add(data[2]);
                     }
             }
+
+            //After we collect data, we're going to create 3 frames for graphics (one for every metric)
+            XYChart clientChart = QuickChart.getChart("ClientProcessingChart", "X", "Y", "y(x)",
+                    changeableParameterData, clientProcessingTimeData);
+
+            XChartPanel chartPanelClient = new XChartPanel(clientChart);
+            frameClientProcessing.getContentPane().add(chartPanelClient);
+            frameClientProcessing.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            frameClientProcessing.setSize(600, 400);
+            frameClientProcessing.setVisible(true);
 
         });
 
