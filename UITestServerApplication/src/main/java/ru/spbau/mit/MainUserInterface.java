@@ -114,7 +114,7 @@ public final class MainUserInterface {
 
             //Get data from the main server (about processing clients time and request handling time)
             data[0] = inputStream.readInt();
-            data[1] = (int)inputStream.readLong();
+            data[1] = (int) (inputStream.readLong());
 
             outputStream.close();
             socket.close();
