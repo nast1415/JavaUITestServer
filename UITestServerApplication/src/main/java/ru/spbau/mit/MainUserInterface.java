@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public final class Interface {
+public final class MainUserInterface {
     private static final JFrame FRAME = new JFrame("Servers");
 
     private static final Container CONTENT_PANE = FRAME.getContentPane();
