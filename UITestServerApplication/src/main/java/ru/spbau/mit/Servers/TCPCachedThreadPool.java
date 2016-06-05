@@ -1,5 +1,6 @@
 package ru.spbau.mit.Servers;
 
+
 import ru.spbau.mit.ArrayProto;
 
 import java.io.DataInputStream;
@@ -7,10 +8,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class TCPOneThread extends BaseServer {
+public class TCPCachedThreadPool extends BaseServer {
     private ServerSocket serverSocket;
 
     private AtomicLong summaryRequestsTime = new AtomicLong(0);
@@ -19,7 +22,9 @@ public class TCPOneThread extends BaseServer {
     private AtomicLong summaryClientsTime = new AtomicLong(0);
     private AtomicInteger numberOfFinishedClients = new AtomicInteger(0);
 
-    public TCPOneThread(int numberOfClients) {
+    ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+
+    public TCPCachedThreadPool(int numberOfClients) {
         super(numberOfClients);
     }
 
@@ -32,17 +37,19 @@ public class TCPOneThread extends BaseServer {
                 if (socket == null) {
                     break;
                 }
-                try {
-                    long currentTime = System.currentTimeMillis();
-                    summaryClientsTime.getAndAdd(-currentTime);  //We need to subtract current time,
-                    // because we want to know only the time of processing clients (not waiting)
-                    handleRequest(socket);
-                } catch (IOException ignored) {
-                } finally {
-                    summaryClientsTime.getAndAdd(System.currentTimeMillis()); //At the end of processing
-                    // we add current time
-                    numberOfFinishedClients.getAndIncrement();
-                }
+                cachedThreadPool.execute(() -> {
+                    try {
+                        long currentTime = System.currentTimeMillis();
+                        summaryClientsTime.getAndAdd(-currentTime);  //We need to subtract current time,
+                        // because we want to know only the time of processing clients (not waiting)
+                        handleRequest(socket);
+                    } catch (IOException ignored) {
+                    } finally {
+                        summaryClientsTime.getAndAdd(System.currentTimeMillis()); //At the end of processing
+                        // we add current time
+                        numberOfFinishedClients.getAndIncrement();
+                    }
+                });
             } catch (IOException e) {
                 break;
             }

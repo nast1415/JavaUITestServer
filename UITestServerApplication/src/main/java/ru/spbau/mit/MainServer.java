@@ -2,6 +2,8 @@ package ru.spbau.mit;
 
 
 import ru.spbau.mit.Servers.BaseServer;
+import ru.spbau.mit.Servers.TCPCachedThreadPool;
+import ru.spbau.mit.Servers.TCPOneClientOneThread;
 import ru.spbau.mit.Servers.TCPOneThread;
 
 import java.io.DataInputStream;
@@ -61,10 +63,10 @@ public class MainServer {
     private void handleRequestStart(String serverType, int numberOfClients) throws IOException {
         switch (serverType) {
             case "TCP, new client - new tread":
-                //sortingServer = new TCPOneThreadForClient(numberOfClients);
+                sortingServer = new TCPOneClientOneThread(numberOfClients);
                 break;
             case "TCP, CachedThreadPool":
-                //sortingServer = new TCPCachedThreadPool(numberOfClients);
+                sortingServer = new TCPCachedThreadPool(numberOfClients);
                 break;
             default:
                 sortingServer = new TCPOneThread(numberOfClients);
