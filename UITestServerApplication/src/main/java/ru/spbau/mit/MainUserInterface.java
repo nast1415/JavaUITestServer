@@ -111,11 +111,7 @@ public final class MainUserInterface {
         CONTENT_PANE.add(mainHorizontalBox, BorderLayout.CENTER);
         CONTENT_PANE.add(countButtonPanel, BorderLayout.SOUTH);
 
-        FRAME.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                System.exit(0);
-            }
-        });
+        FRAME.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         FRAME.setSize(800, 300);
         FRAME.setResizable(false);
