@@ -7,11 +7,17 @@ import ru.spbau.mit.ArrayProto;
 import java.io.IOException;
 
 public abstract class BaseServer {
+    protected int numberOfClients;
+
+    protected BaseServer(int numberOfClients) {
+        this.numberOfClients = numberOfClients;
+    }
+
     public abstract void start() throws IOException;
     public abstract void stop() throws IOException;
 
     public abstract int getQueryTime();
-    public abstract long getSummaryClientsTime(int numberOfClients);
+    public abstract long getSummaryClientsTime();
 
     protected ArrayProto.Array sort(ArrayProto.Array input) {
         int[] inputArray = input.getElementList().stream().mapToInt(x -> x).toArray();
