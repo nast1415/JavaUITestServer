@@ -22,7 +22,6 @@ public class UDPOneRequestOneThread extends BaseServer{
     private AtomicInteger numberOfRequests = new AtomicInteger(0);
 
     private AtomicLong summaryClientsTime = new AtomicLong(0);
-    private AtomicInteger numberOfFinishedClients = new AtomicInteger(0);
 
     DatagramSocket socket;
 
@@ -36,11 +35,14 @@ public class UDPOneRequestOneThread extends BaseServer{
     }
 
     private void handleConnections() {
+        System.err.println("start");
         try {
             socket = new DatagramSocket(8081);
             socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
+                System.err.println("notClosed!!!");
                 summaryClientsTime.getAndAdd(-System.currentTimeMillis());
+                summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
 
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
@@ -68,18 +70,21 @@ public class UDPOneRequestOneThread extends BaseServer{
                         socket.send(packet);
                         System.err.println("Server sent");
 
-                        summaryRequestsTime.getAndAdd(System.currentTimeMillis());
-                        numberOfRequests.getAndIncrement();
                     } catch (IOException ignored) {
                     } finally {
                         summaryClientsTime.getAndAdd(System.currentTimeMillis());
-                        numberOfFinishedClients.getAndIncrement();
+                        summaryRequestsTime.getAndAdd(System.currentTimeMillis());
+                        numberOfRequests.getAndIncrement();
                     }
                 }).start();
 
             }
             System.err.println("Server closed");
         } catch (IOException ignored) {
+            ignored.printStackTrace();
+            summaryClientsTime.getAndAdd(System.currentTimeMillis());
+            summaryRequestsTime.getAndAdd(System.currentTimeMillis());
+            numberOfRequests.getAndIncrement();
         }
     }
 

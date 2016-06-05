@@ -5,6 +5,7 @@ import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import ru.spbau.mit.Clients.BaseClient;
 import ru.spbau.mit.Clients.TCPClient;
+import ru.spbau.mit.Clients.UDPClient;
 import sun.security.pkcs11.wrapper.Constants;
 
 import javax.swing.*;
@@ -66,6 +67,12 @@ public final class MainUserInterface {
                     break;
                 case "TCP, CachedThreadPool":
                     client = new TCPClient(arraySize, delta, numberOfRequests, false);
+                    break;
+                case "UDP, fixedThreadPool":
+                    client = new UDPClient(arraySize, delta, numberOfRequests);
+                    break;
+                case "UDP, one request - one thread":
+                    client = new UDPClient(arraySize, delta, numberOfRequests);
                     break;
                 default:
                     client = new TCPClient(arraySize, delta, numberOfRequests, true);
