@@ -16,14 +16,14 @@ public class UDPClient extends BaseClient {
 
     private int arraySize;
     private int delta;
-    private int cntQueriesPerClient;
+    private int numberOfRequests;
     private int time;
     private Random random = new Random();
 
-    public UDPClient(int arraySize, int delta, int cntQueriesPerClient) {
+    public UDPClient(int arraySize, int delta, int numberOfRequests) {
         this.arraySize = arraySize;
         this.delta = delta;
-        this.cntQueriesPerClient = cntQueriesPerClient;
+        this.numberOfRequests = numberOfRequests;
     }
 
     @Override
@@ -32,7 +32,7 @@ public class UDPClient extends BaseClient {
         DatagramSocket socket = new DatagramSocket();
         socket.setSoTimeout(TIMEOUT);
 
-        for (int i = 0; i < cntQueriesPerClient; i++) {
+        for (int i = 0; i < numberOfRequests; i++) {
             ArrayProto.Array arrayToSort = ArrayProto.Array.newBuilder()
                     .addAllElement(Ints.asList(random.ints(arraySize).toArray())).build();
 

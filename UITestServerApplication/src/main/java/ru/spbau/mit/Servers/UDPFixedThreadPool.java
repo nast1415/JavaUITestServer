@@ -39,40 +39,36 @@ public class UDPFixedThreadPool extends BaseServer {
     }
 
     private void handleConnections() {
-        System.err.println("start");
         try {
             socket = new DatagramSocket(8081);
             socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
-                System.err.println("notClosed!!!");
-                summaryClientsTime.getAndAdd(-System.currentTimeMillis());
-                summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
 
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
                 socket.receive(receivedPacket);
 
-                ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
-                int size = receivedBuffer.getInt();
-                byte[] data = new byte[size];
-                receivedBuffer.get(data);
-                ArrayProto.Array arrayToSort = ArrayProto.Array.parseFrom(data);
-
-                ArrayProto.Array resultArray = sort(arrayToSort);
-                System.err.println("len: " + resultArray.getElementCount());
-
-                ByteBuffer bufferToSend = ByteBuffer.allocate(4 + resultArray.getSerializedSize());
-                bufferToSend.putInt(resultArray.getSerializedSize());
-                bufferToSend.put(resultArray.toByteArray());
-                byte[] dataToSend = bufferToSend.array();
-
                 fixedThreadPool.execute(() -> {
                     try {
-                        System.err.println("Server send");
+                        summaryClientsTime.getAndAdd(-System.currentTimeMillis());
+                        summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
+
+                        ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
+                        int size = receivedBuffer.getInt();
+                        byte[] data = new byte[size];
+                        receivedBuffer.get(data);
+                        ArrayProto.Array arrayToSort = ArrayProto.Array.parseFrom(data);
+
+                        ArrayProto.Array resultArray = sort(arrayToSort);
+
+                        ByteBuffer bufferToSend = ByteBuffer.allocate(4 + resultArray.getSerializedSize());
+                        bufferToSend.putInt(resultArray.getSerializedSize());
+                        bufferToSend.put(resultArray.toByteArray());
+                        byte[] dataToSend = bufferToSend.array();
+
                         DatagramPacket packet = new DatagramPacket(dataToSend, dataToSend.length,
                                 receivedPacket.getSocketAddress());
                         socket.send(packet);
-                        System.err.println("Server sent");
 
                     } catch (IOException ignored) {
                     } finally {
@@ -83,18 +79,12 @@ public class UDPFixedThreadPool extends BaseServer {
                 });
 
             }
-            System.err.println("Server closed");
         } catch (IOException ignored) {
-            ignored.printStackTrace();
-            summaryClientsTime.getAndAdd(System.currentTimeMillis());
-            summaryRequestsTime.getAndAdd(System.currentTimeMillis());
-            numberOfRequests.getAndIncrement();
         }
     }
 
     @Override
     public void stop() throws IOException {
-        System.err.println("close server");
         socket.close();
     }
 

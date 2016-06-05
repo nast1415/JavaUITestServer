@@ -41,29 +41,30 @@ public class UDPOneRequestOneThread extends BaseServer{
             socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
                 System.err.println("notClosed!!!");
-                summaryClientsTime.getAndAdd(-System.currentTimeMillis());
-                summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
 
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
                 socket.receive(receivedPacket);
 
-                ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
-                int size = receivedBuffer.getInt();
-                byte[] data = new byte[size];
-                receivedBuffer.get(data);
-                ArrayProto.Array arrayToSort = ArrayProto.Array.parseFrom(data);
-
-                ArrayProto.Array resultArray = sort(arrayToSort);
-                System.err.println("len: " + resultArray.getElementCount());
-
-                ByteBuffer bufferToSend = ByteBuffer.allocate(4 + resultArray.getSerializedSize());
-                bufferToSend.putInt(resultArray.getSerializedSize());
-                bufferToSend.put(resultArray.toByteArray());
-                byte[] dataToSend = bufferToSend.array();
-
                 new Thread(() -> {
                     try {
+                        summaryClientsTime.getAndAdd(-System.currentTimeMillis());
+                        summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
+
+                        ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
+                        int size = receivedBuffer.getInt();
+                        byte[] data = new byte[size];
+                        receivedBuffer.get(data);
+                        ArrayProto.Array arrayToSort = ArrayProto.Array.parseFrom(data);
+
+                        ArrayProto.Array resultArray = sort(arrayToSort);
+                        System.err.println("len: " + resultArray.getElementCount());
+
+                        ByteBuffer bufferToSend = ByteBuffer.allocate(4 + resultArray.getSerializedSize());
+                        bufferToSend.putInt(resultArray.getSerializedSize());
+                        bufferToSend.put(resultArray.toByteArray());
+                        byte[] dataToSend = bufferToSend.array();
+
                         System.err.println("Server send");
                         DatagramPacket packet = new DatagramPacket(dataToSend, dataToSend.length,
                                 receivedPacket.getSocketAddress());
@@ -81,10 +82,6 @@ public class UDPOneRequestOneThread extends BaseServer{
             }
             System.err.println("Server closed");
         } catch (IOException ignored) {
-            ignored.printStackTrace();
-            summaryClientsTime.getAndAdd(System.currentTimeMillis());
-            summaryRequestsTime.getAndAdd(System.currentTimeMillis());
-            numberOfRequests.getAndIncrement();
         }
     }
 
@@ -101,6 +98,7 @@ public class UDPOneRequestOneThread extends BaseServer{
 
     @Override
     public long getSummaryClientsTime() {
+        System.err.println(summaryClientsTime.get());
         return summaryClientsTime.get() / numberOfClients;
     }
 
