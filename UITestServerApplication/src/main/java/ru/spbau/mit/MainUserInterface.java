@@ -47,19 +47,6 @@ public final class MainUserInterface {
             e.printStackTrace();
         }
 
-        BaseClient client; // Create base client
-
-        //We will create different client (two types for the task) for different requests
-        //false mean - we needn't to create new connection for every client, true - need to
-        switch (serverType) {
-            case "TCP, thread for each client":
-                client = new TCPClient(arraySize, delta, numberOfRequests, false);
-            case "TCP, CachedThreadPool":
-                client = new TCPClient(arraySize, delta, numberOfRequests, false);
-            default:
-                client = new TCPClient(arraySize, delta, numberOfRequests, true);
-        }
-
         //Create two arrays - for clients and for they threads
         List<BaseClient> clients = new ArrayList<BaseClient>();
         List<Thread> clientThreads = new ArrayList<>();
@@ -67,11 +54,25 @@ public final class MainUserInterface {
         //Simulation of the access of different clients to the server (create a thread for each client
         // with chosen type)
         for (int i = 0; i < numberOfClients; i++) {
+            BaseClient client; // Create base client
+
+            //We will create different client (two types for the task) for different requests
+            //false mean - we needn't to create new connection for every client, true - need to
+            switch (serverType) {
+                case "TCP, thread for each client":
+                    client = new TCPClient(arraySize, delta, numberOfRequests, false);
+                    break;
+                case "TCP, CachedThreadPool":
+                    client = new TCPClient(arraySize, delta, numberOfRequests, false);
+                    break;
+                default:
+                    client = new TCPClient(arraySize, delta, numberOfRequests, true);
+                    break;
+            }
             clients.add(client);
-            BaseClient finalClient = client;
             Thread clientThread = new Thread(() -> {
                 try {
-                    finalClient.start();
+                    client.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -235,9 +236,9 @@ public final class MainUserInterface {
             java.util.List<Integer> summaryClientTimeData = new ArrayList<>();
             java.util.List<Integer> changeableParameterData = new ArrayList<>();
 
-            requestHandlingTimeData.add(0);
-            clientProcessingTimeData.add(0);
-            summaryClientTimeData.add(0);
+            //requestHandlingTimeData.add(0);
+            //clientProcessingTimeData.add(0);
+            //summaryClientTimeData.add(0);
 
             //Get data for the changing parameter from textFields of our form
             int from = Integer.parseInt(changeableSettingTextFrom.getText());
