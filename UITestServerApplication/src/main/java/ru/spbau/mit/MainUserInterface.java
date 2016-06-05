@@ -32,7 +32,7 @@ public final class MainUserInterface {
     private static int[] getChartData(int arraySize, int numberOfClients, int delta, int numberOfRequests,
                                       String serverType) {
         try {
-            Socket socket = new Socket("localhost", 8080);
+            Socket socket = new Socket("localhost", 8082);
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
             //Create a request to the main server
@@ -96,7 +96,7 @@ public final class MainUserInterface {
         //Get client data for our chart
         data[2] = (int) (summaryClientTime / numberOfClients);
         try {
-            Socket socket = new Socket("localhost", 8080);
+            Socket socket = new Socket("localhost", 8082);
 
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());

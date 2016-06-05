@@ -19,7 +19,7 @@ public class MainServer {
     }
 
     public void start() throws IOException {
-        serverSocket = new ServerSocket();
+        serverSocket = new ServerSocket(8082);
 
         while (true) {
             try {
