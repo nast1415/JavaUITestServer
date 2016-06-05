@@ -299,7 +299,30 @@ public final class MainUserInterface {
             frameClientProcessing.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
             frameClientProcessing.setSize(600, 400);
+
+
+            XYChart clientSumChart = QuickChart.getChart("ClientSummaryChart", "X", "Y", "y(x)",
+                    changeableParameterData, summaryClientTimeData);
+
+            XChartPanel chartPanelSumClient = new XChartPanel(clientSumChart);
+            frameClientSummary.getContentPane().add(chartPanelSumClient);
+            frameClientSummary.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            frameClientSummary.setSize(600, 400);
+
+            XYChart requestHandlingChart = QuickChart.getChart("RequestHandlingChart", "X", "Y", "y(x)",
+                    changeableParameterData, summaryClientTimeData);
+
+            XChartPanel chartPanelRequestHandling = new XChartPanel(requestHandlingChart);
+            frameRequestHandling.getContentPane().add(chartPanelRequestHandling);
+            frameRequestHandling.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            frameRequestHandling.setSize(600, 400);
+
+
             frameClientProcessing.setVisible(true);
+            frameClientSummary.setVisible(true);
+            frameRequestHandling.setVisible(true);
 
         });
 
@@ -314,7 +337,7 @@ public final class MainUserInterface {
 
         //Setting for the frame
         FRAME.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        FRAME.setSize(800, 300);
+        FRAME.setSize(800, 350);
         FRAME.setResizable(false);
 
         //Finally, making frame visible
