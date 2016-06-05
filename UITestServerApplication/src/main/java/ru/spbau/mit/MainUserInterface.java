@@ -11,10 +11,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Parameter;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,6 +116,57 @@ public final class MainUserInterface {
         }
 
         return data;
+
+    }
+
+    public static void createStatisticsFile(String architecture, String changingParameter, int firstConstantParameter,
+                         int secondConstantParameter, int from, int to, int step, String metric, List<Integer> X,
+                         List<Integer> Y, int numberOfRequests) {
+
+        Path pathDirectoryResults = Paths.get(".", "dataResults");
+        if (!Files.exists(pathDirectoryResults)) {
+            try {
+                Files.createDirectory(pathDirectoryResults);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Path pathDirectoryFiles = Paths.get(pathDirectoryResults.toString(), "statisticFiles");
+        if (!Files.exists(pathDirectoryFiles)) {
+            try {
+                Files.createDirectory(pathDirectoryFiles);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String fileName = "changing_" + changingParameter + "_metric_" + metric + ".csv";
+        Path dataFilePath = Paths.get(pathDirectoryFiles.toString(), fileName);
+
+        if (!Files.exists(dataFilePath)) {
+            try {
+                Files.createFile(dataFilePath);
+                try (PrintWriter printer = new PrintWriter(new FileOutputStream(dataFilePath.toString(), true))) {
+                    printer.printf("Number of requests = %d\n", numberOfRequests);
+                    if (changingParameter.equals("number of elements")) {
+                        printer.printf("Array size changes from %d to %d with step %d\n", from, to, step);
+                        printer.printf("Delta = %d\n", secondConstantParameter);
+                        printer.printf("Clients = %d\n", firstConstantParameter);
+                    } else if (changingParameter.equals("delta")) {
+                        printer.printf("Array size = %d\n", secondConstantParameter);
+                        printer.printf("Delta changes from %d to %d with step %d\n", from, to, step);
+                        printer.printf("Clients = %d\n", firstConstantParameter);
+                    } else {
+                        printer.printf("Array size = %d\n", firstConstantParameter);
+                        printer.printf("Delta = %d\n", secondConstantParameter);
+                        printer.printf("Count of clients changes from %d to %d with step %d\n", from, to, step);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -226,8 +279,24 @@ public final class MainUserInterface {
         JButton startButton = new JButton("Start drawing");
         startButton.setPreferredSize(new Dimension(350, 25));
 
+        List<String> metrics = new ArrayList<String>() {{
+            add("clientProcessing");
+            add("requestHandling");
+            add("summaryClientTime");
+        }};
+
         //Add action listener to the button
         startButton.addActionListener(e -> {
+            String xString = (String)changeableParameterChoice.getSelectedItem();
+            for (String metric: metrics) {
+                String fileName = "change_" + xString + "_metric_" + metric + ".csv";
+                Path pathFile = Paths.get(".", "results", "Data_files", fileName);
+                try {
+                    Files.deleteIfExists(pathFile);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
             int numberOfRequests = Integer.parseInt(requestsConstantParameterText.getText());
 
             //Create three arrays for data for three metrics
@@ -263,6 +332,16 @@ public final class MainUserInterface {
                         clientProcessingTimeData.add(data[1]);
                         summaryClientTimeData.add(data[2]);
                     }
+                    createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
+                            to, step, "clientProcessing", changeableParameterData,
+                            clientProcessingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
+                            to, step, "requestHandling", changeableParameterData,
+                            requestHandlingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
+                            to, step, "summaryClientTime", changeableParameterData,
+                            summaryClientTimeData, numberOfRequests );
+
                     break;
                 case "clients":
                     arraySize = Integer.parseInt(sizeConstantParameterText.getText());
@@ -275,6 +354,16 @@ public final class MainUserInterface {
                         clientProcessingTimeData.add(data[1]);
                         summaryClientTimeData.add(data[2]);
                     }
+
+                    createStatisticsFile(serverType, "clients", arraySize, delta, from,
+                            to, step, "clientProcessing", changeableParameterData,
+                            clientProcessingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "clients", arraySize, delta, from,
+                            to, step, "requestHandling", changeableParameterData,
+                            requestHandlingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "clients", arraySize, delta, from,
+                            to, step, "summaryClientTime", changeableParameterData,
+                            summaryClientTimeData, numberOfRequests );
                     break;
                 default:
                     numberOfClients = Integer.parseInt(clientsConstantParameterText.getText());
@@ -288,6 +377,16 @@ public final class MainUserInterface {
                         clientProcessingTimeData.add(data[1]);
                         summaryClientTimeData.add(data[2]);
                     }
+
+                    createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
+                            to, step, "clientProcessing", changeableParameterData,
+                            clientProcessingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
+                            to, step, "requestHandling", changeableParameterData,
+                            requestHandlingTimeData, numberOfRequests );
+                    createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
+                            to, step, "summaryClientTime", changeableParameterData,
+                            summaryClientTimeData, numberOfRequests );
             }
 
             //After we collect data, we're going to create 3 frames for graphics (one for every metric)

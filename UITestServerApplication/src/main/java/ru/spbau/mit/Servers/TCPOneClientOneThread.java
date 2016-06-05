@@ -39,7 +39,11 @@ public class TCPOneClientOneThread extends BaseServer {
                         long currentTime = System.currentTimeMillis();
                         summaryClientsTime.getAndAdd(-currentTime);  //We need to subtract current time,
                         // because we want to know only the time of processing clients (not waiting)
-                        handleRequest(socket);
+
+                        while (!socket.isClosed()) {
+                            handleRequest(socket);
+                        }
+
                     } catch (IOException ignored) {
                     } finally {
                         summaryClientsTime.getAndAdd(System.currentTimeMillis()); //At the end of processing
