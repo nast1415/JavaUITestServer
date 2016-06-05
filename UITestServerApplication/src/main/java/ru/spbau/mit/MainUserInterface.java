@@ -175,7 +175,8 @@ public final class MainUserInterface {
         //Create first box with architecture and changeable parameter
 
         JLabel architectureLabel = new JLabel("Architecture: ");
-        String[] architectures = {"TCP, new client - new tread", "TCP, one thread", "TCP, CachedThreadPool"};
+        String[] architectures = {"TCP, new client - new tread", "TCP, one thread", "TCP, CachedThreadPool",
+                "UDP, one request - one thread", "UDP, fixedThreadPool"};
         JComboBox architectureChoice = new JComboBox(architectures);
 
         JLabel changeableParameterLabel = new JLabel("Changeable parameter: ");

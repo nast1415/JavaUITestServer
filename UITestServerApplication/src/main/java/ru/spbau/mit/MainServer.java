@@ -1,10 +1,7 @@
 package ru.spbau.mit;
 
 
-import ru.spbau.mit.Servers.BaseServer;
-import ru.spbau.mit.Servers.TCPCachedThreadPool;
-import ru.spbau.mit.Servers.TCPOneClientOneThread;
-import ru.spbau.mit.Servers.TCPOneThread;
+import ru.spbau.mit.Servers.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -67,6 +64,12 @@ public class MainServer {
                 break;
             case "TCP, CachedThreadPool":
                 sortingServer = new TCPCachedThreadPool(numberOfClients);
+                break;
+            case "UDP, fixedThreadPool":
+                sortingServer = new UDPFixedThreadPool(numberOfClients);
+                break;
+            case "UDP, one request - one thread":
+                sortingServer = new UDPOneRequestOneThread(numberOfClients);
                 break;
             default:
                 sortingServer = new TCPOneThread(numberOfClients);
