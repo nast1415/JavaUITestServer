@@ -16,9 +16,7 @@ public class TCPOneClientOneThread extends BaseServer {
 
     private AtomicLong summaryRequestsTime = new AtomicLong(0);
     private AtomicInteger numberOfRequests = new AtomicInteger(0);
-
     private AtomicLong summaryClientsTime = new AtomicLong(0);
-    private AtomicInteger numberOfFinishedClients = new AtomicInteger(0);
 
     public TCPOneClientOneThread(int numberOfClients) {
         super(numberOfClients);
@@ -27,6 +25,7 @@ public class TCPOneClientOneThread extends BaseServer {
     @Override
     public void start() throws IOException {
         serverSocket = new ServerSocket(8081, 2000);
+        System.err.println("startTCP");
         while (!serverSocket.isClosed()) {
             try {
                 Socket socket = serverSocket.accept();
@@ -36,8 +35,7 @@ public class TCPOneClientOneThread extends BaseServer {
                 //We create a thread for each client
                 new Thread(() -> {
                     try {
-                        long currentTime = System.currentTimeMillis();
-                        summaryClientsTime.getAndAdd(-currentTime);  //We need to subtract current time,
+                        summaryClientsTime.getAndAdd(-System.currentTimeMillis());  //We need to subtract current time,
                         // because we want to know only the time of processing clients (not waiting)
 
                         while (!socket.isClosed()) {
@@ -48,7 +46,6 @@ public class TCPOneClientOneThread extends BaseServer {
                     } finally {
                         summaryClientsTime.getAndAdd(System.currentTimeMillis()); //At the end of processing
                         // we add current time
-                        numberOfFinishedClients.getAndIncrement();
                     }
                 }).start();
             } catch (IOException e) {
@@ -59,9 +56,6 @@ public class TCPOneClientOneThread extends BaseServer {
     }
 
     private void handleRequest(Socket socket) throws IOException {
-        long startTimeOfRequestHandling = System.currentTimeMillis();
-        summaryRequestsTime.addAndGet(-startTimeOfRequestHandling);
-
         DataInputStream inputStream = new DataInputStream(socket.getInputStream());
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
@@ -70,27 +64,32 @@ public class TCPOneClientOneThread extends BaseServer {
         inputStream.readFully(dataBuffer);
         ArrayProto.Array arrayBeforeSort = ArrayProto.Array.parseFrom(dataBuffer);
 
+        summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
+
         ArrayProto.Array sortedArray = sort(arrayBeforeSort);
-        outputStream.writeInt(sortedArray.getSerializedSize());
-        outputStream.write(sortedArray.toByteArray());
-        outputStream.flush();
 
         summaryRequestsTime.getAndAdd(System.currentTimeMillis());
         numberOfRequests.getAndIncrement();
+
+        outputStream.writeInt(sortedArray.getSerializedSize());
+        outputStream.write(sortedArray.toByteArray());
+        outputStream.flush();
     }
 
     @Override
     public void stop() throws IOException {
+        //System.err.println("stopTCP");
         serverSocket.close();
     }
 
     @Override
     public int getQueryTime() {
+        System.err.println("TimeQuery: " + summaryRequestsTime.get() + " " + numberOfRequests.get());
         return (int) (summaryRequestsTime.get() / numberOfRequests.get());
     }
 
     @Override
-    public long getSummaryClientsTime() {
+    public int getSummaryClientsTime() {
         return (int) (summaryClientsTime.get() / numberOfClients);
     }
 }

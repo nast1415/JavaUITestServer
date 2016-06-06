@@ -10,7 +10,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class MainServer {
-    private ServerSocket serverSocket;
     private BaseServer sortingServer;
 
     public static void main(String[] args) throws IOException {
@@ -18,7 +17,7 @@ public class MainServer {
     }
 
     public void start() throws IOException {
-        serverSocket = new ServerSocket(8082);
+        ServerSocket serverSocket = new ServerSocket(8082);
 
         while (true) {
             try {
@@ -44,6 +43,7 @@ public class MainServer {
                     String serverType = inputStream.readUTF();
                     int numberOfClients = inputStream.readInt();
                     handleRequestStart(serverType, numberOfClients);
+                    outputStream.writeBoolean(true);
                     break;
                 case 1:
                     handleRequestStop(outputStream);
@@ -86,6 +86,6 @@ public class MainServer {
     private void handleRequestStop(DataOutputStream outputStream) throws IOException {
         sortingServer.stop();
         outputStream.writeInt(sortingServer.getQueryTime());
-        outputStream.writeLong(sortingServer.getSummaryClientsTime());
+        outputStream.writeInt(sortingServer.getSummaryClientsTime());
     }
 }

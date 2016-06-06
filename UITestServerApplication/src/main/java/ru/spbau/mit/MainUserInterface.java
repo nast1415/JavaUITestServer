@@ -36,17 +36,20 @@ public final class MainUserInterface {
                                       String serverType) {
         try {
             Socket socket = new Socket("localhost", 8082);
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
             //Create a request to the main server
             outputStream.writeByte(0); //Byte of the requestType (0 for start, 1 for stop)
             outputStream.writeUTF(serverType); //Which type of server we want to start
             outputStream.writeInt(numberOfClients); //Number of the client (we need it for calculating data)
-
-            Thread.sleep(100);
+            outputStream.flush();
+            if (!inputStream.readBoolean()) {
+                System.err.println("Error in starting server");
+            }
             outputStream.close();
             socket.close();
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -62,7 +65,7 @@ public final class MainUserInterface {
             //We will create different client (two types for the task) for different requests
             //false mean - we needn't to create new connection for every client, true - need to
             switch (serverType) {
-                case "TCP, thread for each client":
+                case "TCP, new client - new tread":
                     client = new TCPClient(arraySize, delta, numberOfRequests, false);
                     break;
                 case "TCP, CachedThreadPool":
@@ -95,6 +98,7 @@ public final class MainUserInterface {
         for (int i = 0; i < numberOfClients; i++) {
             try {
                 clientThreads.get(i).join();
+                //System.err.println("joined");
                 summaryClientTime += clients.get(i).getClientTime();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -114,7 +118,7 @@ public final class MainUserInterface {
 
             //Get data from the main server (about processing clients time and request handling time)
             data[0] = inputStream.readInt();
-            data[1] = (int) (inputStream.readLong());
+            data[1] = inputStream.readInt();
 
             outputStream.close();
             socket.close();
@@ -122,13 +126,13 @@ public final class MainUserInterface {
             e.printStackTrace();
         }
 
+        System.err.println("Data: " + data[0] + " " + data[1] + " " + data[2]);
         return data;
-
     }
 
     public static void createStatisticsFile(String architecture, String changingParameter, int firstConstantParameter,
-                         int secondConstantParameter, int from, int to, int step, String metric, List<Integer> X,
-                         List<Integer> Y, int numberOfRequests) {
+                                            int secondConstantParameter, int from, int to, int step, String metric, List<Integer> X,
+                                            List<Integer> Y, int numberOfRequests) {
 
         Path pathDirectoryResults = Paths.get(".", "dataResults");
         if (!Files.exists(pathDirectoryResults)) {
@@ -148,26 +152,35 @@ public final class MainUserInterface {
             }
         }
 
-        String fileName = "changing_" + changingParameter + "_metric_" + metric + ".csv";
+        String fileName = changingParameter +"_change_" + metric + "_metric" + ".csv";
         Path dataFilePath = Paths.get(pathDirectoryFiles.toString(), fileName);
 
         if (!Files.exists(dataFilePath)) {
             try {
                 Files.createFile(dataFilePath);
                 try (PrintWriter printer = new PrintWriter(new FileOutputStream(dataFilePath.toString(), true))) {
-                    printer.printf("Number of requests = %d\n", numberOfRequests);
-                    if (changingParameter.equals("number of elements")) {
-                        printer.printf("Array size changes from %d to %d with step %d\n", from, to, step);
-                        printer.printf("Delta = %d\n", secondConstantParameter);
-                        printer.printf("Clients = %d\n", firstConstantParameter);
-                    } else if (changingParameter.equals("delta")) {
-                        printer.printf("Array size = %d\n", secondConstantParameter);
-                        printer.printf("Delta changes from %d to %d with step %d\n", from, to, step);
-                        printer.printf("Clients = %d\n", firstConstantParameter);
-                    } else {
-                        printer.printf("Array size = %d\n", firstConstantParameter);
-                        printer.printf("Delta = %d\n", secondConstantParameter);
-                        printer.printf("Count of clients changes from %d to %d with step %d\n", from, to, step);
+                    printer.printf("Architecture: %s\n", architecture);
+                    printer.printf("Number of requests: %d\n", numberOfRequests);
+                    switch (changingParameter) {
+                        case "number of elements":
+                            printer.printf("Array size changes from %d to %d with step: %d\n", from, to, step);
+                            printer.printf("Delta: %d\n", secondConstantParameter);
+                            printer.printf("Clients: %d\n", firstConstantParameter);
+                            break;
+                        case "delta":
+                            printer.printf("Array size: %d\n", secondConstantParameter);
+                            printer.printf("Delta changes from %d to %d with step: %d\n", from, to, step);
+                            printer.printf("Number of clients: %d\n", firstConstantParameter);
+                            break;
+                        default:
+                            printer.printf("Array size: %d\n", firstConstantParameter);
+                            printer.printf("Delta: %d\n", secondConstantParameter);
+                            printer.printf("Number of clients changes from %d to %d with step %d\n", from, to, step);
+                            break;
+                    }
+                    printer.printf("Data:\n");
+                    for (int i = 0; i < X.size(); i++) {
+                        printer.printf("XArray: %d, YArray: %d\n", X.get(i), Y.get(i));
                     }
                 }
             } catch (IOException e) {
@@ -295,16 +308,6 @@ public final class MainUserInterface {
 
         //Add action listener to the button
         startButton.addActionListener(e -> {
-            String xString = (String)changeableParameterChoice.getSelectedItem();
-            for (String metric: metrics) {
-                String fileName = "change_" + xString + "_metric_" + metric + ".csv";
-                Path pathFile = Paths.get(".", "results", "Data_files", fileName);
-                try {
-                    Files.deleteIfExists(pathFile);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
             int numberOfRequests = Integer.parseInt(requestsConstantParameterText.getText());
 
             //Create three arrays for data for three metrics
@@ -342,13 +345,13 @@ public final class MainUserInterface {
                     }
                     createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
                             to, step, "clientProcessing", changeableParameterData,
-                            clientProcessingTimeData, numberOfRequests );
+                            clientProcessingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
                             to, step, "requestHandling", changeableParameterData,
-                            requestHandlingTimeData, numberOfRequests );
+                            requestHandlingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "number of elements", numberOfClients, delta, from,
                             to, step, "summaryClientTime", changeableParameterData,
-                            summaryClientTimeData, numberOfRequests );
+                            summaryClientTimeData, numberOfRequests);
 
                     break;
                 case "clients":
@@ -365,13 +368,13 @@ public final class MainUserInterface {
 
                     createStatisticsFile(serverType, "clients", arraySize, delta, from,
                             to, step, "clientProcessing", changeableParameterData,
-                            clientProcessingTimeData, numberOfRequests );
+                            clientProcessingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "clients", arraySize, delta, from,
                             to, step, "requestHandling", changeableParameterData,
-                            requestHandlingTimeData, numberOfRequests );
+                            requestHandlingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "clients", arraySize, delta, from,
                             to, step, "summaryClientTime", changeableParameterData,
-                            summaryClientTimeData, numberOfRequests );
+                            summaryClientTimeData, numberOfRequests);
                     break;
                 default:
                     numberOfClients = Integer.parseInt(clientsConstantParameterText.getText());
@@ -388,13 +391,13 @@ public final class MainUserInterface {
 
                     createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
                             to, step, "clientProcessing", changeableParameterData,
-                            clientProcessingTimeData, numberOfRequests );
+                            clientProcessingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
                             to, step, "requestHandling", changeableParameterData,
-                            requestHandlingTimeData, numberOfRequests );
+                            requestHandlingTimeData, numberOfRequests);
                     createStatisticsFile(serverType, "delta", numberOfClients, arraySize, from,
                             to, step, "summaryClientTime", changeableParameterData,
-                            summaryClientTimeData, numberOfRequests );
+                            summaryClientTimeData, numberOfRequests);
             }
 
             //After we collect data, we're going to create 3 frames for graphics (one for every metric)
@@ -418,7 +421,7 @@ public final class MainUserInterface {
             frameClientSummary.setSize(600, 400);
 
             XYChart requestHandlingChart = QuickChart.getChart("RequestHandlingChart", "X", "Y", "y(x)",
-                    changeableParameterData, summaryClientTimeData);
+                    changeableParameterData, requestHandlingTimeData);
 
             XChartPanel chartPanelRequestHandling = new XChartPanel(requestHandlingChart);
             frameRequestHandling.getContentPane().add(chartPanelRequestHandling);

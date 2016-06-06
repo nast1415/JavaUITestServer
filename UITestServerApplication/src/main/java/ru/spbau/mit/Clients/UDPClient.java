@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class UDPClient extends BaseClient {
-    private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT = 20000;
     private static final int MAX_SIZE = 50000;
 
     private int arraySize;
@@ -47,9 +47,7 @@ public class UDPClient extends BaseClient {
 
             byte[] receivedData = new byte[MAX_SIZE];
 
-            System.err.println("Client receive");
             socket.receive(new DatagramPacket(receivedData, receivedData.length));
-            System.err.println("Client received");
 
             ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
             int size = receivedBuffer.getInt();
@@ -76,9 +74,7 @@ public class UDPClient extends BaseClient {
         }
 
         time = (int) (System.currentTimeMillis() - beginTime);
-        System.err.println("end client");
         socket.close();
-        System.err.println("ended client");
     }
 
     @Override

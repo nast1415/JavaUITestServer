@@ -67,6 +67,7 @@ public class TCPClient extends BaseClient {
                     break;
                 }
             }
+            //System.err.println("Sort OK");
 
             if (isNewConnectionNeeded) {
                 inputStream.close();
@@ -75,6 +76,7 @@ public class TCPClient extends BaseClient {
             }
 
             try {
+                //System.err.println("sleep" + delta);
                 Thread.sleep(delta);
             } catch (InterruptedException e) {
                 e.printStackTrace();

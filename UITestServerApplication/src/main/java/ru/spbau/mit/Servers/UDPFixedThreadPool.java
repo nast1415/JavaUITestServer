@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class UDPFixedThreadPool extends BaseServer {
-    private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT = 20000;
     private static final int MAX_SIZE = 50000;
 
     ExecutorService fixedThreadPool = Executors.newFixedThreadPool(4);
@@ -43,7 +43,6 @@ public class UDPFixedThreadPool extends BaseServer {
             socket = new DatagramSocket(8081);
             socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
-
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
                 socket.receive(receivedPacket);
@@ -94,7 +93,7 @@ public class UDPFixedThreadPool extends BaseServer {
     }
 
     @Override
-    public long getSummaryClientsTime() {
-        return summaryClientsTime.get() / numberOfClients;
+    public int getSummaryClientsTime() {
+        return (int) (summaryClientsTime.get() / numberOfClients);
     }
 }

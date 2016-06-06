@@ -17,7 +17,7 @@ public abstract class BaseServer {
     public abstract void stop() throws IOException;
 
     public abstract int getQueryTime();
-    public abstract long getSummaryClientsTime();
+    public abstract int getSummaryClientsTime();
 
     protected ArrayProto.Array sort(ArrayProto.Array input) {
         int[] inputArray = input.getElementList().stream().mapToInt(x -> x).toArray();

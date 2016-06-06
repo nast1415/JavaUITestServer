@@ -35,13 +35,10 @@ public class UDPOneRequestOneThread extends BaseServer{
     }
 
     private void handleConnections() {
-        System.err.println("start");
         try {
             socket = new DatagramSocket(8081);
             socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
-                System.err.println("notClosed!!!");
-
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
                 socket.receive(receivedPacket);
@@ -58,19 +55,15 @@ public class UDPOneRequestOneThread extends BaseServer{
                         ArrayProto.Array arrayToSort = ArrayProto.Array.parseFrom(data);
 
                         ArrayProto.Array resultArray = sort(arrayToSort);
-                        System.err.println("len: " + resultArray.getElementCount());
 
                         ByteBuffer bufferToSend = ByteBuffer.allocate(4 + resultArray.getSerializedSize());
                         bufferToSend.putInt(resultArray.getSerializedSize());
                         bufferToSend.put(resultArray.toByteArray());
                         byte[] dataToSend = bufferToSend.array();
 
-                        System.err.println("Server send");
                         DatagramPacket packet = new DatagramPacket(dataToSend, dataToSend.length,
                                 receivedPacket.getSocketAddress());
                         socket.send(packet);
-                        System.err.println("Server sent");
-
                     } catch (IOException ignored) {
                     } finally {
                         summaryClientsTime.getAndAdd(System.currentTimeMillis());
@@ -80,14 +73,12 @@ public class UDPOneRequestOneThread extends BaseServer{
                 }).start();
 
             }
-            System.err.println("Server closed");
         } catch (IOException ignored) {
         }
     }
 
     @Override
     public void stop() throws IOException {
-        System.err.println("close server");
         socket.close();
     }
 
@@ -97,9 +88,7 @@ public class UDPOneRequestOneThread extends BaseServer{
     }
 
     @Override
-    public long getSummaryClientsTime() {
-        System.err.println(summaryClientsTime.get());
-        return summaryClientsTime.get() / numberOfClients;
+    public int getSummaryClientsTime() {
+        return (int) (summaryClientsTime.get() / numberOfClients);
     }
-
 }

@@ -15,9 +15,7 @@ public class TCPOneThread extends BaseServer {
 
     private AtomicLong summaryRequestsTime = new AtomicLong(0);
     private AtomicInteger numberOfRequests = new AtomicInteger(0);
-
     private AtomicLong summaryClientsTime = new AtomicLong(0);
-    private AtomicInteger numberOfFinishedClients = new AtomicInteger(0);
 
     public TCPOneThread(int numberOfClients) {
         super(numberOfClients);
@@ -33,15 +31,17 @@ public class TCPOneThread extends BaseServer {
                     break;
                 }
                 try {
-                    long currentTime = System.currentTimeMillis();
-                    summaryClientsTime.getAndAdd(-currentTime);  //We need to subtract current time,
+                    summaryClientsTime.getAndAdd(-System.currentTimeMillis());  //We need to subtract current time,
                     // because we want to know only the time of processing clients (not waiting)
-                    handleRequest(socket);
+
+                    while (!socket.isClosed()) {
+                        handleRequest(socket);
+                    }
+
                 } catch (IOException ignored) {
                 } finally {
                     summaryClientsTime.getAndAdd(System.currentTimeMillis()); //At the end of processing
                     // we add current time
-                    numberOfFinishedClients.getAndIncrement();
                 }
             } catch (IOException e) {
                 break;
@@ -50,9 +50,6 @@ public class TCPOneThread extends BaseServer {
     }
 
     private void handleRequest(Socket socket) throws IOException {
-        long startTimeOfRequestHandling = System.currentTimeMillis();
-        summaryRequestsTime.addAndGet(-startTimeOfRequestHandling);
-
         DataInputStream inputStream = new DataInputStream(socket.getInputStream());
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
@@ -61,13 +58,16 @@ public class TCPOneThread extends BaseServer {
         inputStream.readFully(dataBuffer);
         ArrayProto.Array arrayBeforeSort = ArrayProto.Array.parseFrom(dataBuffer);
 
+        summaryRequestsTime.getAndAdd(-System.currentTimeMillis());
+
         ArrayProto.Array sortedArray = sort(arrayBeforeSort);
-        outputStream.writeInt(sortedArray.getSerializedSize());
-        outputStream.write(sortedArray.toByteArray());
-        outputStream.flush();
 
         summaryRequestsTime.getAndAdd(System.currentTimeMillis());
         numberOfRequests.getAndIncrement();
+
+        outputStream.writeInt(sortedArray.getSerializedSize());
+        outputStream.write(sortedArray.toByteArray());
+        outputStream.flush();
     }
 
     @Override
@@ -81,7 +81,7 @@ public class TCPOneThread extends BaseServer {
     }
 
     @Override
-    public long getSummaryClientsTime() {
+    public int getSummaryClientsTime() {
         return (int) (summaryClientsTime.get() / numberOfClients);
     }
 }
