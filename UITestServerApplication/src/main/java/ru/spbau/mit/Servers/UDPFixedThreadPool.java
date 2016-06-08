@@ -6,10 +6,8 @@ import ru.spbau.mit.ArrayProto;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketAddress;
-import java.net.SocketException;
+import java.net.*;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class UDPFixedThreadPool extends BaseServer {
-    private static final int TIMEOUT = 20000;
+    private static final int TIMEOUT = 1000;
     private static final int MAX_SIZE = 50000;
 
     ExecutorService fixedThreadPool = Executors.newFixedThreadPool(4);
@@ -41,11 +39,16 @@ public class UDPFixedThreadPool extends BaseServer {
     private void handleConnections() {
         try {
             socket = new DatagramSocket(8081);
-            socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
-                socket.receive(receivedPacket);
+                socket.setSoTimeout(TIMEOUT);
+                try {
+                    socket.receive(receivedPacket);
+                } catch (SocketTimeoutException e) {
+                    System.err.println("I haven't received packet!");
+                    continue;
+                }
 
                 fixedThreadPool.execute(() -> {
                     try {
@@ -69,7 +72,7 @@ public class UDPFixedThreadPool extends BaseServer {
                                 receivedPacket.getSocketAddress());
                         socket.send(packet);
 
-                    } catch (IOException ignored) {
+                    } catch (IOException | BufferUnderflowException ignored) {
                     } finally {
                         summaryClientsTime.getAndAdd(System.currentTimeMillis());
                         summaryRequestsTime.getAndAdd(System.currentTimeMillis());

@@ -152,7 +152,7 @@ public final class MainUserInterface {
             }
         }
 
-        String fileName = changingParameter +"_change_" + metric + "_metric" + ".csv";
+        String fileName = architecture + ", " + changingParameter +"_change_" + metric + "_metric" + ".csv";
         Path dataFilePath = Paths.get(pathDirectoryFiles.toString(), fileName);
 
         if (!Files.exists(dataFilePath)) {
@@ -179,8 +179,12 @@ public final class MainUserInterface {
                             break;
                     }
                     printer.printf("Data:\n");
+                    for (Integer aX : X) {
+                        printer.printf("%d\n", aX);
+                    }
+                    printer.printf("\n");
                     for (int i = 0; i < X.size(); i++) {
-                        printer.printf("XArray: %d, YArray: %d\n", X.get(i), Y.get(i));
+                        printer.printf("%d\n", Y.get(i));
                     }
                 }
             } catch (IOException e) {

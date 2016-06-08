@@ -4,10 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import ru.spbau.mit.ArrayProto;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class UDPOneRequestOneThread extends BaseServer{
-    private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT = 1000;
     private static final int MAX_SIZE = 50000;
 
     private AtomicLong summaryRequestsTime = new AtomicLong(0);
@@ -37,11 +34,16 @@ public class UDPOneRequestOneThread extends BaseServer{
     private void handleConnections() {
         try {
             socket = new DatagramSocket(8081);
-            socket.setSoTimeout(TIMEOUT);
             while (!socket.isClosed()) {
                 byte[] receivedData = new byte[MAX_SIZE];
                 DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
-                socket.receive(receivedPacket);
+                socket.setSoTimeout(TIMEOUT);
+                try {
+                    socket.receive(receivedPacket);
+                } catch (SocketTimeoutException e) {
+                    System.err.println("I haven't received packet!");
+                    continue;
+                }
 
                 new Thread(() -> {
                     try {

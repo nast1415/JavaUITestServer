@@ -7,11 +7,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class UDPClient extends BaseClient {
-    private static final int TIMEOUT = 20000;
+    private static final int TIMEOUT = 1000;
     private static final int MAX_SIZE = 50000;
 
     private int arraySize;
@@ -32,6 +33,8 @@ public class UDPClient extends BaseClient {
         DatagramSocket socket = new DatagramSocket();
         socket.setSoTimeout(TIMEOUT);
 
+        int failsCnt = 0;
+
         for (int i = 0; i < numberOfRequests; i++) {
             ArrayProto.Array arrayToSort = ArrayProto.Array.newBuilder()
                     .addAllElement(Ints.asList(random.ints(arraySize).toArray())).build();
@@ -47,7 +50,13 @@ public class UDPClient extends BaseClient {
 
             byte[] receivedData = new byte[MAX_SIZE];
 
-            socket.receive(new DatagramPacket(receivedData, receivedData.length));
+            socket.setSoTimeout(TIMEOUT);
+            try {
+                socket.receive(new DatagramPacket(receivedData, receivedData.length));
+            } catch (SocketTimeoutException e) {
+                failsCnt++;
+                continue;
+            }
 
             ByteBuffer receivedBuffer = ByteBuffer.wrap(receivedData);
             int size = receivedBuffer.getInt();
@@ -74,6 +83,9 @@ public class UDPClient extends BaseClient {
         }
 
         time = (int) (System.currentTimeMillis() - beginTime);
+
+        System.err.println("Loose " + failsCnt + " packets of " + numberOfRequests);
+
         socket.close();
     }
 
